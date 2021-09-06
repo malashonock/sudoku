@@ -51,6 +51,24 @@ function getUnusedDigits(quadrant) {
   return digits;
 }
 
+function getSolidDigitsFromRow(matrix, row) {
+  return matrix[row].filter((val, idx, arr) => !Array.isArray(val));
+}
+
+function getSolidDigitsFromColumn(matrix, col) {
+  const solidDigits = [];
+  
+  for (let row = 0; row < matrix.length; row++) {
+    const value = matrix[row][col]
+    if (!Array.isArray(value)) {
+      solidDigits.push(value);      
+    }
+  }
+
+  return solidDigits;
+}
+
+
 const DIGITS = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
 function solveSudoku(matrix) {
