@@ -68,11 +68,31 @@ function getSolidDigitsFromColumn(matrix, col) {
   return solidDigits;
 }
 
+function areMatricesEqual(matrix1, matrix2) {
+  const flat1 = matrix1.flat(1);
+  const flat2 = matrix2.flat(1);
+
+  if (matrix1.length !== matrix2.length) {
+    return false;
+  }
+
+  for (let i = 0; i < matrix1.length; i++) {
+    if (matrix1[i].join('') !== matrix2[i].join('')) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function deepCopy(array) {
+  return JSON.parse(JSON.stringify(array));
+}
 
 const DIGITS = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
 function solveSudoku(matrix) {
-  let sudoku = [...matrix]; // clone array
+  let sudoku = deepCopy(matrix); // clone array
 
   // Step 1: in each quadrant, replace zeros with arrays of unused digits
   const quadrants = [];
@@ -95,12 +115,29 @@ function solveSudoku(matrix) {
   sudoku = combineQuadrants(quadrants);
 
   // Step 2: for each array cell, remove solid digits that are present in its row/column
-  traverseMatrix(sudoku, (cellContent, row, col, sudoku) => {
-    if (Array.isArray(cellContent)) {
-      // ...
-    }
-  });
-  
+  // If there's only one element left in array cell, flatten the array
+  // Repeat until no more changes are applied
+  let sudokuBefore = [];
+
+  do {
+    sudokuBefore = deepCopy(sudoku);
+    
+    traverseMatrix(sudoku, (cellContent, row, col, sudoku) => {
+      if (Array.isArray(cellContent)) {
+        const solidDigitsInRow = getSolidDigitsFromRow(sudoku, row);
+        const solidDigitsInColumn = getSolidDigitsFromColumn(sudoku, col);
+
+        sudoku[row][col] = cellContent
+          .filter(value => !solidDigitsInRow.includes(value))
+          .filter(value => !solidDigitsInColumn.includes(value));
+
+        if (sudoku[row][col].length === 1) {
+          sudoku[row][col] = sudoku[row][col][0];
+        }
+      }
+    });
+  } while (!areMatricesEqual(sudoku, sudokuBefore));
+
   return sudoku;
 }
 
