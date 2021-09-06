@@ -2,7 +2,8 @@
 function traverseMatrix(matrix, callback) {
   for (let i = 0; i < matrix.length; i++) {
     for (let j = 0; j < matrix[0].length; j++) {
-      callback(matrix[i][j], i, j, matrix);
+      let result = callback(matrix[i][j], i, j, matrix);
+      if (result) return result;
     }
   }
 }
@@ -68,6 +69,26 @@ function getSolidDigitsFromColumn(matrix, col) {
   return solidDigits;
 }
 
+function getNextArrayCellCoords(matrix) {
+  return traverseMatrix(matrix, (value, row, col, matrix) => {
+    if (Array.isArray(value)) {
+      return { row: row, col: col };
+    }
+  });
+}
+
+function containsEmptyArrayCell(matrix) {
+  return traverseMatrix(matrix, (value, row, col, matrix) => {
+    if (Array.isArray(value)) {
+      if (value.length === 0) {
+        return true;
+      }
+    }
+  });
+
+  return false;
+}
+
 function areMatricesEqual(matrix1, matrix2) {
   const flat1 = matrix1.flat(1);
   const flat2 = matrix2.flat(1);
@@ -91,14 +112,14 @@ function deepCopy(array) {
 
 const DIGITS = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
-function solveSudoku(matrix) {
-  let sudoku = deepCopy(matrix); // clone array
+function prepareSudoku(sudoku) {
+  let sudokuCopy = deepCopy(sudoku);
 
   // Step 1: in each quadrant, replace zeros with arrays of unused digits
   const quadrants = [];
   for (let i = 0; i < 3; i++) {
     for (let j = 0; j < 3; j++) {
-      quadrants.push(getQuadrant(sudoku, i, j));
+      quadrants.push(getQuadrant(sudokuCopy, i, j));
     }
   }
 
@@ -112,7 +133,11 @@ function solveSudoku(matrix) {
     });
   });
 
-  sudoku = combineQuadrants(quadrants);
+  return combineQuadrants(quadrants);
+}
+
+function solveSudokuDeterminately(sudoku) {
+  let sudokuCopy = deepCopy(sudoku);
 
   // Step 2: for each array cell, remove solid digits that are present in its row/column
   // If there's only one element left in array cell, flatten the array
@@ -120,9 +145,9 @@ function solveSudoku(matrix) {
   let sudokuBefore = [];
 
   do {
-    sudokuBefore = deepCopy(sudoku);
+    sudokuBefore = deepCopy(sudokuCopy);
     
-    traverseMatrix(sudoku, (cellContent, row, col, sudoku) => {
+    traverseMatrix(sudokuCopy, (cellContent, row, col, sudoku) => {
       if (Array.isArray(cellContent)) {
         const solidDigitsInRow = getSolidDigitsFromRow(sudoku, row);
         const solidDigitsInColumn = getSolidDigitsFromColumn(sudoku, col);
@@ -136,33 +161,57 @@ function solveSudoku(matrix) {
         }
       }
     });
-  } while (!areMatricesEqual(sudoku, sudokuBefore));
+  } while (!areMatricesEqual(sudokuCopy, sudokuBefore));
 
-  return sudoku;
+  return sudokuCopy;
+}
+
+function generateSudokuSolutions(sudoku) {
+  let sudokuCopy = deepCopy(sudoku);
+
+  sudokuCopy = solveSudokuDeterminately(sudokuCopy);
+
+  if (containsEmptyArrayCell(sudokuCopy)) {
+    return null; // dead end
+  }
+
+  if (!getNextArrayCellCoords(sudokuCopy)) {
+    console.log(sudokuCopy);
+    return sudokuCopy; // success
+  }
+
+
+  // Step 3: Choose any array cell, then try recursively to solve sudoku
+  // assuming for each of array elements that it's a solid value in this cell
+  const nextArrayCellCoords = getNextArrayCellCoords(sudokuCopy);
+  const nextOptions = [...sudokuCopy[nextArrayCellCoords.row][nextArrayCellCoords.col]];
+
+  for (let option of nextOptions) {
+    let anotherSudokuCopy = deepCopy(sudokuCopy);
+    let solutionAttempt;
+    
+    anotherSudokuCopy[nextArrayCellCoords.row][nextArrayCellCoords.col] = option;
+    solutionAttempt = generateSudokuSolutions(anotherSudokuCopy);
+    
+    if (solutionAttempt) return solutionAttempt;
+  }
+}
+
+function solveSudoku(matrix) {
+  let sudoku = prepareSudoku(matrix);
+  return generateSudokuSolutions(sudoku);
 }
 
 const sudokuToSolve = [
-  [0, 5, 0, 0, 7, 0, 0, 0, 1],
-  [8, 7, 6, 0, 2, 1, 9, 0, 3],
-  [0, 0, 0, 0, 3, 5, 0, 0, 0],
-  [0, 0, 0, 0, 4, 3, 6, 1, 0],
-  [0, 4, 0, 0, 0, 9, 0, 0, 2],
-  [0, 1, 2, 0, 5, 0, 0, 0, 4],
-  [0, 8, 9, 0, 6, 4, 0, 0, 0],
-  [0, 0, 0, 0, 0, 7, 0, 0, 0],
-  [1, 6, 7, 0, 0, 2, 5, 4, 0]
-];
-
-const solvedSudoku = [
-  [5, 3, 4, 6, 7, 8, 9, 1, 2],
-  [6, 7, 2, 1, 9, 5, 3, 4, 8],
-  [1, 9, 8, 3, 4, 2, 5, 6, 7],
-  [8, 5, 9, 7, 6, 1, 4, 2, 3],
-  [4, 2, 6, 8, 5, 3, 7, 9, 1],
-  [7, 1, 3, 9, 2, 4, 8, 5, 6],
-  [9, 6, 1, 5, 3, 7, 2, 8, 4],
-  [2, 8, 7, 4, 1, 9, 6, 3, 5],
-  [3, 4, 5, 2, 8, 6, 1, 7, 9]
+  [6, 5, 0, 7, 3, 0, 0, 8, 0],
+  [0, 0, 0, 4, 8, 0, 5, 3, 0],
+  [8, 4, 0, 9, 2, 5, 0, 0, 0],
+  [0, 9, 0, 8, 0, 0, 0, 0, 0],
+  [5, 3, 0, 2, 0, 9, 6, 0, 0],
+  [0, 0, 6, 0, 0, 0, 8, 0, 0],
+  [0, 0, 9, 0, 0, 0, 0, 0, 6],
+  [0, 0, 7, 0, 0, 0, 0, 5, 0],
+  [1, 6, 5, 3, 9, 0, 4, 7, 0]
 ];
 
 solveSudoku(sudokuToSolve);
