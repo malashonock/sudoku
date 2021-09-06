@@ -23,8 +23,24 @@ function getQuadrant(sudoku, rowIndex, colIndex) {
   return quadrant;
 }
 
+function combineQuadrants(quadrants) {
+  const sudoku = [];
+
+  for (let i = 0; i < 3; i++) {
+    for (let j = 0; j < 3; j++) {
+      sudoku.push([
+        ...quadrants[3 * i + 0][j], 
+        ...quadrants[3 * i + 1][j], 
+        ...quadrants[3 * i + 2][j]
+      ]);
+    }
+  }
+
+  return sudoku;
+}
+
 function getUnusedDigits(quadrant) {
-  const digits = DIGITS;
+  const digits = [...DIGITS];
 
   traverseMatrix(quadrant, (value, row, col) => {
     if (DIGITS.includes(value)) {
@@ -38,9 +54,11 @@ function getUnusedDigits(quadrant) {
 const DIGITS = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
 function solveSudoku(matrix) {
+  const sudoku = [...matrix]; // clone array
 
+  
 
-  return matrix;
+  return sudoku;
 }
 
 const sudokuToSolve = [
@@ -67,7 +85,18 @@ const solvedSudoku = [
   [3, 4, 5, 2, 8, 6, 1, 7, 9]
 ];
 
-const quadrant = getQuadrant(sudokuToSolve, 0, 0)
-console.log(getUnusedDigits(quadrant));
+const q1 = getQuadrant(solvedSudoku, 0, 0);
+const q2 = getQuadrant(solvedSudoku, 0, 1);
+const q3 = getQuadrant(solvedSudoku, 0, 2);
+const q4 = getQuadrant(solvedSudoku, 1, 0);
+const q5 = getQuadrant(solvedSudoku, 1, 1);
+const q6 = getQuadrant(solvedSudoku, 1, 2);
+const q7 = getQuadrant(solvedSudoku, 2, 0);
+const q8 = getQuadrant(solvedSudoku, 2, 1);
+const q9 = getQuadrant(solvedSudoku, 2, 2);
+
+const quadrants = [q1, q2, q3, q4, q5, q6, q7, q8, q9];
+
+console.log(combineQuadrants(quadrants));
 
 module.exports = solveSudoku;
