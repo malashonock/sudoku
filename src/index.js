@@ -127,7 +127,7 @@ function prepareSudoku(sudoku) {
 
   quadrants.map((q, i) => {
     traverseMatrix(q, (value, row, col, q) => {
-      if (value === 0) {
+      if (value === 0 || Array.isArray(value)) {
         q[row][col] = unusedDigits[i];
       }
     });
@@ -138,14 +138,15 @@ function prepareSudoku(sudoku) {
 
 function solveSudokuDeterminately(sudoku) {
   let sudokuCopy = deepCopy(sudoku);
-
+  
   // Step 2: for each array cell, remove solid digits that are present in its row/column
   // If there's only one element left in array cell, flatten the array
   // Repeat until no more changes are applied
   let sudokuBefore = [];
-
+  
   do {
     sudokuBefore = deepCopy(sudokuCopy);
+    sudokuCopy = prepareSudoku(sudokuCopy);
     
     traverseMatrix(sudokuCopy, (cellContent, row, col, sudoku) => {
       if (Array.isArray(cellContent)) {
@@ -198,20 +199,19 @@ function generateSudokuSolutions(sudoku) {
 }
 
 function solveSudoku(matrix) {
-  let sudoku = prepareSudoku(matrix);
-  return generateSudokuSolutions(sudoku);
+  return generateSudokuSolutions(matrix);
 }
 
 const sudokuToSolve = [
-  [6, 5, 0, 7, 3, 0, 0, 8, 0],
-  [0, 0, 0, 4, 8, 0, 5, 3, 0],
-  [8, 4, 0, 9, 2, 5, 0, 0, 0],
-  [0, 9, 0, 8, 0, 0, 0, 0, 0],
-  [5, 3, 0, 2, 0, 9, 6, 0, 0],
-  [0, 0, 6, 0, 0, 0, 8, 0, 0],
-  [0, 0, 9, 0, 0, 0, 0, 0, 6],
-  [0, 0, 7, 0, 0, 0, 0, 5, 0],
-  [1, 6, 5, 3, 9, 0, 4, 7, 0]
+  [0, 8, 0, 0, 0, 0, 0, 0, 1],
+  [0, 0, 4, 3, 0, 0, 9, 8, 0],
+  [3, 0, 1, 0, 0, 8, 7, 0, 0],
+  [0, 1, 0, 5, 4, 0, 0, 6, 0],
+  [0, 0, 0, 2, 9, 0, 4, 1, 0],
+  [0, 4, 3, 0, 0, 6, 0, 9, 0],
+  [0, 0, 8, 0, 0, 5, 0, 3, 0],
+  [0, 6, 7, 0, 3, 9, 5, 0, 8],
+  [1, 0, 5, 0, 8, 0, 0, 0, 0]
 ];
 
 solveSudoku(sudokuToSolve);
